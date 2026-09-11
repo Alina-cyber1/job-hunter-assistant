@@ -2,4 +2,5 @@ requests
 python-telegram-bot
 schedule
 python-dotenv
-gigachat  # если используете GigaChat
+gigachat 
+pandas
