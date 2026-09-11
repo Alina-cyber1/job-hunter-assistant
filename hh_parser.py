@@ -3,21 +3,20 @@ import requests
 import xml.etree.ElementTree as ET
 
 def fetch_vacancies():
-    """
-    Ищет вакансии через RSS-ленту Habr Career.
-    Параметры не передаём — фильтруем сами.
-    """
     url = "https://career.habr.com/vacancies/rss"
     
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; JobHunter/1.0)"
     }
     
-    # Ключевые слова для фильтрации
     keywords = [
         "python", "ml", "ai", "machine learning", "data science",
         "data scientist", "аналитик данных", "llm", "nlp", "rag",
-        "pytorch", "tensorflow", "pandas", "numpy", "sql"
+        "pytorch", "tensorflow", "pandas", "numpy", "sql",
+        "разработчик python", "python developer", "data engineer",
+        "ml engineer", "ai engineer", "computer vision", "deep learning",
+        "нейросет", "искусственный интеллект", "машинное обучение",
+        "backend", "бэкенд", "fastapi", "django"
     ]
     
     try:
@@ -44,12 +43,11 @@ def fetch_vacancies():
             
             total_found += 1
             
-            # Фильтруем: ищем ключевые слова в названии + описании
             text_to_check = (title + " " + description).lower()
             matches = [kw for kw in keywords if kw in text_to_check]
             
             if not matches:
-                continue  # не наша вакансия — пропускаем
+                continue
             
             vacancy_id = link.rstrip("/").split("/")[-1] if link else ""
             
