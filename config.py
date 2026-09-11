@@ -14,7 +14,7 @@ GIGACHAT_SECRET = os.getenv("GIGACHAT_SECRET")
 SEARCH_QUERY = "AI/ML разработчик"
 AREA_ID = 0  # 0 = вся Россия
 PER_PAGE = 20
-MIN_MATCH_SCORE = 30
+MIN_MATCH_SCORE = 12
 
 # Фильтр по типу занятости
 SCHEDULE = "remote"  # только удалённая работа
