@@ -30,6 +30,24 @@ def send_telegram_message(text: str) -> bool:
         return False
 
 
+def send_startup_message():
+    """Отправляет приветствие при запуске бота (для проверки связи)"""
+    message = """🤖 <b>Job Hunter Assistant запущен!</b>
+
+Что умеет:
+🔍 Ищет вакансии на Habr Career
+📊 Анализирует по вашему резюме
+📝 Генерирует сопроводительные письма
+📩 Отправляет результаты сюда
+
+<b>Что дальше:</b>
+Подождите 1-2 минуты — сейчас придёт отчёт по найденным вакансиям.
+
+⚠️ Если сообщения не приходят — проверьте ID у @userinfobot."""
+    
+    return send_telegram_message(message)
+
+
 def send_vacancy_report(vacancy: dict, analysis: dict, cover_letter: str):
     """Отправляет отчёт по вакансии"""
     schedule_info = "Удалённо" if vacancy.get("is_remote") else "В офисе"
