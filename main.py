@@ -1,8 +1,8 @@
+# main.py
 from hh_parser import fetch_vacancies
 from job_analyzer import JobAnalyzer
 from cover_letter_generator import generate_cover_letter
 from telegram_sender import send_vacancy_report, send_telegram_message
-from config import MIN_MATCH_SCORE
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     print(f"Найдено вакансий: {len(vacancies)}")
     
     if not vacancies:
-        send_telegram_message("⚠️ Habr Career не вернул вакансий. Возможно, RSS не работает.")
+        send_telegram_message("Habr Career не вернул вакансий.")
         return
     
     analyzer = JobAnalyzer()
@@ -23,7 +23,6 @@ def main():
     
     for vacancy in vacancies:
         analysis = analyzer.analyze(vacancy)
-        
         all_vacancies_text += f"• {vacancy.get('name')[:60]} — {analysis.get('match_score')}%\n"
         
         if analysis.get("should_apply"):
