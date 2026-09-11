@@ -107,7 +107,7 @@ class JobAnalyzer:
         
         # 7. Проверка на минимальное количество совпадений
         # Нельзя откликаться, если совпало меньше 3 навыков
-        if len(matched_skills) < 3:
+        if len(matched_skills) < 1:
             return {
                 "should_apply": False,
                 "match_score": round(match_score, 1),
@@ -130,7 +130,7 @@ class JobAnalyzer:
             }
         
         # 9. Финальное решение
-        should_apply = match_score >= 70  # Константа из config.py
+        should_apply = match_score >= 30  # Константа из config.py
         
         return {
             "should_apply": should_apply,
