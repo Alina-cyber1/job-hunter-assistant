@@ -1,58 +1,68 @@
+# hh_parser.py
 import requests
-from config import SEARCH_QUERY, AREA_ID, PER_PAGE, SCHEDULE
+import xml.etree.ElementTree as ET
 
 def fetch_vacancies():
-    """Получает список вакансий с hh.ru с фильтром по удалённой работе"""
-    url = "https://api.hh.ru/vacancies"
+    """
+    Ищет вакансии через RSS-ленту Habr Career.
+    Это открытый источник, не блокирует GitHub Actions.
+    """
+    url = "https://career.habr.com/vacancies/rss"
     
-    # ВАЖНО: заголовки, чтобы hh.ru не блокировал запрос
     headers = {
-        "User-Agent": "JobHunterAssistant/1.0 (alina_has@mail.ru)",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (compatible; JobHunter/1.0; +https://github.com/Alina-cyber1/job-hunter-assistant)",
+        "Accept": "application/rss+xml, application/xml, text/xml"
     }
     
+    # Параметры поиска для Habr Career
     params = {
-        "text": SEARCH_QUERY,
-        "area": AREA_ID,
-        "per_page": PER_PAGE,
-        "schedule": SCHEDULE,
-        "only_with_salary": True
+        "q": "AI ML Python Data Science",  # поисковый запрос
+        "type": "all",                      # все типы вакансий
+        "remote": "true",                   # только удалёнка
+        "s": "100"                          # сортировка по дате
     }
     
     try:
         response = requests.get(url, headers=headers, params=params, timeout=30)
         
         if response.status_code != 200:
-            print(f"Ошибка API: {response.status_code}")
-            print(f"Ответ сервера: {response.text[:500]}")
+            print(f" Habr Career вернул код: {response.status_code}")
             return []
         
-        items = response.json().get("items", [])
+        # Парсим RSS-ленту
+        root = ET.fromstring(response.content)
         vacancies = []
         
-        for item in items:
-            schedule = item.get("schedule", {})
-            is_remote = schedule.get("id") == "remote" if schedule else False
+        for item in root.findall(".//item"):
+            title = item.findtext("title", "").strip()
+            link = item.findtext("link", "").strip()
+            description = item.findtext("description", "").strip()
+            pub_date = item.findtext("pubDate", "").strip()
             
-            if not is_remote:
+            if not title or not link:
                 continue
             
+            # Извлекаем ID из ссылки
+            vacancy_id = link.rstrip("/").split("/")[-1] if link else ""
+            
             vacancies.append({
-                "id": item.get("id"),
-                "name": item.get("name"),
-                "company": item.get("employer", {}).get("name", "Не указана"),
-                "url": item.get("alternate_url"),
-                "requirement": item.get("snippet", {}).get("requirement", ""),
-                "responsibility": item.get("snippet", {}).get("responsibility", ""),
-                "salary_from": item.get("salary", {}).get("from", 0) if item.get("salary") else 0,
-                "salary_to": item.get("salary", {}).get("to", 0) if item.get("salary") else 0,
-                "salary_currency": item.get("salary", {}).get("currency", "RUR") if item.get("salary") else "RUR",
-                "is_remote": is_remote,
-                "schedule_name": schedule.get("name", "Не указан") if schedule else "Не указан"
+                "id": vacancy_id,
+                "name": title,
+                "company": "Habr Career",
+                "url": link,
+                "requirement": description,
+                "responsibility": description,
+                "salary_from": 0,
+                "salary_to": 0,
+                "salary_currency": "RUR",
+                "is_remote": True,       # RSS уже отфильтрован
+                "schedule_name": "Удалённо",
+                "published": pub_date
             })
         
+        print(f"📥 Habr Career: найдено {len(vacancies)} вакансий")
         return vacancies
     
     except Exception as e:
-        print(f"Ошибка запроса: {e}")
+        print(f" Ошибка запроса Habr Career: {e}")
         return []
