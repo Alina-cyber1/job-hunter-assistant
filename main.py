@@ -2,17 +2,21 @@
 from hh_parser import fetch_vacancies
 from job_analyzer import JobAnalyzer
 from cover_letter_generator import generate_cover_letter
-from telegram_sender import send_vacancy_report, send_telegram_message
+from telegram_sender import send_vacancy_report, send_telegram_message, send_startup_message
 
 
 def main():
     print("Запуск Job Hunter Assistant...")
     
+    # Отправляем приветствие при запуске
+    send_startup_message()
+    print("Приветствие отправлено")
+    
     vacancies = fetch_vacancies()
     print(f"Найдено вакансий: {len(vacancies)}")
     
     if not vacancies:
-        send_telegram_message("Habr Career не вернул вакансий.")
+        send_telegram_message("⚠️ Habr Career не вернул вакансий.")
         return
     
     analyzer = JobAnalyzer()
@@ -35,6 +39,7 @@ def main():
     print(f"\nНайдено подходящих: {found_count}")
     print(f"Отклонено: {rejected_count}")
     
+    # Итоговый отчёт
     if found_count == 0:
         send_telegram_message(
             f"📊 <b>Job Hunter отчёт</b>\n\n"
@@ -42,6 +47,13 @@ def main():
             f"Подходящих: {found_count}\n"
             f"Отклонено: {rejected_count}\n\n"
             f"<b>Все вакансии:</b>\n{all_vacancies_text[:2000]}"
+        )
+    else:
+        send_telegram_message(
+            f"✅ <b>Готово!</b>\n\n"
+            f"Найдено вакансий: {len(vacancies)}\n"
+            f"Подходящих: {found_count}\n"
+            f"Отклонено: {rejected_count}"
         )
 
 
