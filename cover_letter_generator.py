@@ -1,9 +1,9 @@
+# cover_letter_generator.py
 import os
 from resume_parser import RESUME_TEXT
 
 def generate_cover_letter(vacancy: dict, matched_skills: list) -> str:
     """Генерирует сопроводительное письмо"""
-    
     try:
         from gigachat import GigaChat
         client = GigaChat(
@@ -32,7 +32,6 @@ def generate_cover_letter(vacancy: dict, matched_skills: list) -> str:
         return response.choices[0].message.content.strip()
     
     except Exception as e:
-        # Если GigaChat недоступен — шаблон
         return f"""Здравствуйте!
 
 Меня заинтересовала вакансия {vacancy.get('name')} в компании {vacancy.get('company')}.
