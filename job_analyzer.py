@@ -35,18 +35,7 @@ class JobAnalyzer:
         ]
     
     def analyze(self, vacancy: dict) -> dict:
-        """
-        Анализирует вакансию и возвращает решение.
-        
-        Возвращает словарь с полями:
-        - should_apply: bool — стоит ли откликаться
-        - match_score: float — процент совпадения (0-100)
-        - reason: str — причина, если не подходит
-        - matched_skills: list — навыки, которые совпали
-        - missing_skills: list — навыки, которые не совпали
-        """
-        
-        # 1. Проверка на удалённую работу (если фильтр уже не сработал)
+        # 1. Проверка на удалённую работу
         if not vacancy.get("is_remote", False):
             return {
                 "should_apply": False,
@@ -59,15 +48,9 @@ class JobAnalyzer:
         # 2. Проверка на релевантность по названию
         name = vacancy.get("name", "").lower()
         name_is_relevant = any(kw in name for kw in self.target_keywords)
+        name_bonus = 10 if name_is_relevant else 0
         
-        if not name_is_relevant:
-            # Если название не содержит ключевых слов — всё равно проверяем описание
-            # Но снижаем балл
-            name_bonus = 0
-        else:
-            name_bonus = 10  # Бонус за релевантное название
-        
-        # 3. Объединяем требования и обязанности для анализа
+        # 3. Объединяем требования и обязанности
         text = (
             vacancy.get("requirement", "") + " " + 
             vacancy.get("responsibility", "")
@@ -87,8 +70,6 @@ class JobAnalyzer:
         missing_skills = []
         
         for skill in self.my_skills:
-            # Проверяем, есть ли навык в тексте вакансии
-            # Используем границы слов для точного поиска
             pattern = r'\b' + re.escape(skill) + r'\b'
             if re.search(pattern, text):
                 matched_skills.append(skill)
@@ -97,26 +78,30 @@ class JobAnalyzer:
         
         # 5. Вычисляем процент совпадения
         total_skills = len(self.my_skills)
-        if total_skills == 0:
-            match_score = 0
-        else:
-            match_score = (len(matched_skills) / total_skills) * 100
+        match_score = (len(matched_skills) / total_skills) * 100 if total_skills else 0
         
         # 6. Добавляем бонус за релевантное название
         match_score = min(match_score + name_bonus, 100)
         
-        # 7. Проверка на минимальное количество совпадений
-        # Нельзя откликаться, если совпало меньше 3 навыков
+        # === ОТЛАДКА ===
+        print(f"  Вакансия: {vacancy.get('name')[:60]}")
+        print(f"  Совпало навыков: {len(matched_skills)}")
+        print(f"  Match score: {match_score:.1f}%")
+        print(f"  Совпавшие: {matched_skills[:5]}")
+        print("---")
+        # === КОНЕЦ ОТЛАДКИ ===
+        
+        # 7. Проверка на минимум навыков
         if len(matched_skills) < 1:
             return {
                 "should_apply": False,
                 "match_score": round(match_score, 1),
-                "reason": f"Совпало только {len(matched_skills)} навыков (минимум 3)",
+                "reason": f"Совпало только {len(matched_skills)} навыков",
                 "matched_skills": matched_skills[:5],
                 "missing_skills": missing_skills[:5]
             }
         
-        # 8. Проверяем наличие хотя бы одного ключевого навыка
+        # 8. Проверяем наличие ключевого навыка
         key_skills = ["python", "ml", "ai", "machine learning", "data science", "rag", "llm"]
         has_key_skill = any(skill in matched_skills for skill in key_skills)
         
@@ -124,20 +109,20 @@ class JobAnalyzer:
             return {
                 "should_apply": False,
                 "match_score": round(match_score, 1),
-                "reason": "Нет ключевых навыков (Python, ML, AI, RAG, LLM)",
+                "reason": "Нет ключевых навыков",
                 "matched_skills": matched_skills[:5],
                 "missing_skills": missing_skills[:5]
             }
         
         # 9. Финальное решение
-        should_apply = match_score >= 30  # Константа из config.py
+        should_apply = match_score >= 30
         
         return {
             "should_apply": should_apply,
             "match_score": round(match_score, 1),
-            "reason": "Подходит" if should_apply else f"Совпадение {match_score:.1f}% (ниже порога 70%)",
-            "matched_skills": matched_skills[:10],  # Топ-10 совпавших
-            "missing_skills": missing_skills[:5],   # Топ-5 недостающих
+            "reason": "Подходит" if should_apply else f"Совпадение {match_score:.1f}% (ниже порога)",
+            "matched_skills": matched_skills[:10],
+            "missing_skills": missing_skills[:5],
             "matched_count": len(matched_skills),
             "total_skills": total_skills
         }
